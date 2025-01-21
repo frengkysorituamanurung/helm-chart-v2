@@ -10,32 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repository
+      # 1. Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Debug directory structure
+      # 2. Debug directory structure
       - name: Debug directory structure
         run: |
           echo "Current directory:"
           pwd
-          echo "Directory contents:"
+          echo "Files in current directory:"
           ls -R
 
-      # Package Helm Chart
+      # 3. Package Helm Chart
       - name: Package Helm Chart
-        working-directory: helm-chart-v2
         run: |
-          helm package .
-          mkdir -p ../charts
-          mv *.tgz ../charts/
+          helm package .  # Memaketkan chart dari root direktori
+          mkdir -p charts  # Membuat direktori 'charts/' jika belum ada
+          mv *.tgz charts/  # Memindahkan file .tgz ke direktori 'charts/'
 
-      # Generate index.yaml
+      # 4. Generate index.yaml
       - name: Generate index.yaml
         run: |
           helm repo index charts --url https://frengkysorituamanurung.github.io/helm-chart-v2/
       
-      # Commit and Push Changes
+      # 5. Commit and Push Changes
       - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,7 +45,7 @@ jobs:
           git commit -m "ci: update index.yaml and release Helm chart"
           git push origin main
 
-      # Create Tag
+      # 6. Create Tag
       - name: Create Tag
         run: |
           VERSION="v0.1.$(date +%s)"
@@ -54,7 +53,7 @@ jobs:
           git tag -a $VERSION -m "Release $VERSION"
           git push origin $VERSION
 
-      # Create Release
+      # 7. Create GitHub Release
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
