@@ -14,28 +14,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Validate directory and list contents
-      - name: Check directory structure
+      # Debug directory structure
+      - name: Debug directory structure
         run: |
           echo "Current directory:"
           pwd
-          echo "Listing files:"
+          echo "Directory contents:"
           ls -R
 
       # Package Helm Chart
       - name: Package Helm Chart
-        working-directory: helm-chart
+        working-directory: helm-chart-v2
         run: |
           helm package .
           mkdir -p ../charts
           mv *.tgz ../charts/
 
-      # 4. Generate index.yaml
+      # Generate index.yaml
       - name: Generate index.yaml
         run: |
-          helm repo index charts --url https://frengkysorituamanurung.github.io/helm-chart/
+          helm repo index charts --url https://frengkysorituamanurung.github.io/helm-chart-v2/
       
-      # 5. Commit and Push Changes
+      # Commit and Push Changes
       - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,7 +45,8 @@ jobs:
           git add charts/
           git commit -m "ci: update index.yaml and release Helm chart"
           git push origin main
-        
+
+      # Create Tag
       - name: Create Tag
         run: |
           VERSION="v0.1.$(date +%s)"
@@ -53,7 +54,7 @@ jobs:
           git tag -a $VERSION -m "Release $VERSION"
           git push origin $VERSION
 
-      # 6. Create Release
+      # Create Release
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
