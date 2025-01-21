@@ -1,0 +1,63 @@
+name: Release Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Validate directory and list contents
+      - name: Check directory structure
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Listing files:"
+          ls -R
+
+      # Package Helm Chart
+      - name: Package Helm Chart
+        working-directory: helm-chart
+        run: |
+          helm package .
+          mkdir -p ../charts
+          mv *.tgz ../charts/
+
+      # 4. Generate index.yaml
+      - name: Generate index.yaml
+        run: |
+          helm repo index charts --url https://frengkysorituamanurung.github.io/helm-chart/
+      
+      # 5. Commit and Push Changes
+      - name: Commit and Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add charts/
+          git commit -m "ci: update index.yaml and release Helm chart"
+          git push origin main
+        
+      - name: Create Tag
+        run: |
+          VERSION="v0.1.$(date +%s)"
+          echo "Tag: $VERSION"
+          git tag -a $VERSION -m "Release $VERSION"
+          git push origin $VERSION
+
+      # 6. Create Release
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: charts/*.tgz
+          tag: $VERSION
+          name: "Helm Chart Release $VERSION"
+          token: ${{ secrets.GITHUB_TOKEN }}
